@@ -51,7 +51,7 @@ userSchema.virtual("password")
       return this._password;
   })
 
-  userSchema.method = {
+  userSchema.methods = {
       authenticate: function(plainpassword){
             return this.securePassword(plainpassword) === this.encry_password;
       },
@@ -60,7 +60,7 @@ userSchema.virtual("password")
             try{
 
                 return crypto.createHmac('sha256', this.salt)
-                   .update('Plain password')
+                   .update(plainpassword)
                    .digest('hex');
 
             } catch (err){
