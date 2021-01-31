@@ -1,7 +1,17 @@
 const User = require("../models/user");
+const {check, validationResult}  = require('express-validator');
+var jwt = require('jsonwebtoken');
+var expressJwt = require('express-jwt');
 
 exports.signup = function(req,res)
 {
+    const errors = validationResult(req)
+
+    if(!errors.isEmpty()){
+        return res.status(422).json({
+            error: errors.array()[0].msg
+        })
+    }
     const user = new User(req.body)
     user.save((err,user) => {
         if(err){
@@ -16,6 +26,43 @@ exports.signup = function(req,res)
             id: user._id
         });
     })
+};
+
+exports.signin = function (req,res)
+{
+    const {email,password} = req.body;
+
+  //  const errors = validationResult(req)
+
+    if(!errors.isEmpty()){
+        return res.status(422).json({
+            error: errors.array()[0].msg
+        })
+    }
+
+    User.findOne({email}, (err, user) => {
+        if(err){
+            res.status(400).json({
+                error: "User email doesnot exist"
+            })
+        }
+        if(!user.authenticate(password)){
+            res.status(401).json({
+                error: "Email and password donot match"
+            })
+        }
+
+        //create token
+        const token = jwt.sign({_id: user._id}, process.env.SECRET)
+  
+        //put token in a cookie
+        res.token("token",token, {expire: new Date() + 9999});
+         
+        //send response to front end
+
+        const {_id, name, email, role} = user;
+        return res.json({token, user: {_id, name, email, role}});
+    });
 };
 
 exports.signout = function(req,res)
