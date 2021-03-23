@@ -30,6 +30,9 @@ exports.signup = function(req,res)
 
 exports.signin = function (req,res)
 {
+    const errors = validationResult(req)
+
+
     const {email,password} = req.body;
 
   //  const errors = validationResult(req)
@@ -41,13 +44,13 @@ exports.signin = function (req,res)
     }
 
     User.findOne({email}, (err, user) => {
-        if(err){
-            res.status(400).json({
+        if(err || !user){
+            return res.status(400).json({
                 error: "User email doesnot exist"
             })
         }
         if(!user.authenticate(password)){
-            res.status(401).json({
+            return res.status(401).json({
                 error: "Email and password donot match"
             })
         }
@@ -56,7 +59,7 @@ exports.signin = function (req,res)
         const token = jwt.sign({_id: user._id}, process.env.SECRET)
   
         //put token in a cookie
-        res.token("token",token, {expire: new Date() + 9999});
+        res.cookie("token",token, {expire: new Date() + 9999});
          
         //send response to front end
 
@@ -67,7 +70,38 @@ exports.signin = function (req,res)
 
 exports.signout = function(req,res)
 {
+    res.clearCookie("token");
     res.json({
-        message:"User signout"
+        message:"User signout successfulyy"
     });
+};
+
+
+// protected routes
+exports.isSignedIn = expressJwt({
+    secret: process.env.SECRET,
+    userProperty: "auth"
+});
+
+// custom middleware
+
+exports.isAuthenticates = (req, res, next) => {
+    let checker = req.profile && req.auth && req.profile._id === req.auth._id;
+    if(!checker)
+    {
+        res.status(403).json({
+            error: "Access denied"
+        })
+    }
+    next();
+}
+
+exports.isAdmin = (req, res, next) => {
+    if(req.profile.role == 0)
+    {
+        res.status(403).json({
+            error: "Access denied, Your are not admin"
+        })
+    }
+    next();
 };
