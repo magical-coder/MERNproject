@@ -41,3 +41,32 @@ exports.getAllCategory = (req, res) => {
         res.json({items});
     })
 }
+exports.updateCategory = (req,res) => {
+    const category = req.category;
+    category.name = req.body.name;
+
+    category.save((err, updatedCategory) => {
+        if(err)
+        {
+            return res.status(400).json({
+                error: "not able to update category"
+            });
+        }
+        res.json({updatedCategory});
+    })
+}
+
+exports.removeCategory = (req,res) => {
+    const category = req.category;
+    category.name = req.body.name;
+
+    category.remove((err, Category) => {
+        if(err)
+        {
+            return res.status(400).json({
+                error: "not able to delete category"
+            });
+        }
+        res.json({message: "successfully deleted"});
+    })
+}
